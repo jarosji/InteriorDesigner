@@ -13,7 +13,7 @@
 AJJWall::AJJWall()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 FJJWallSaveData AJJWall::CreateSaveData()
@@ -47,8 +47,8 @@ void AJJWall::Rebuild()
 
 void AJJWall::AddWallSegment(const FVector& Start, const FVector& End, float Rot, bool FlipOrientation)
 {
-	float Distance = FVector::Distance(Start, End);
-	FVector A = FVector(Distance/2 + Start.X, Start.Y, 0) - Start;
+	float Width = FVector::Distance(Start, End);
+	FVector A = FVector(Width/2 + Start.X, Start.Y, 0) - Start;
 	FVector Location = Start + FRotator(0, Rot, 0).RotateVector(A);
 	Location.Z = Height/2;
 	
@@ -62,7 +62,7 @@ void AJJWall::AddWallSegment(const FVector& Start, const FVector& End, float Rot
 	DynamicMesh,
 	PrimitiveOptions,
 	Transform,
-	Distance, Height,
+	Width, Height,
 	0, 0);
 
 	int ToId = FlipOrientation ? 2 : 1;

@@ -36,12 +36,13 @@ bool UIDSave::SaveProject(const FString& FullFilePath, const UIDProject* Project
 	{
 		ToBinary.FlushCache();
 		ToBinary.Empty();
+		return true;
 	}
     
 	ToBinary.FlushCache();
 	ToBinary.Empty();
     
-	return true;
+	return false;
 }
 
 bool UIDSave::LoadProject(const FString& FullFilePath, UIDProject* LoadedProject)
@@ -101,6 +102,8 @@ bool UIDSave::LoadProject(const FString& FullFilePath, UIDProject* LoadedProject
 			if(GetWorld()->GetSubsystem<UJJAssetSubsystem>()->FindTexture(RoomSave.WallSaves[i].OuterTexturePath, TextureOuter))
 				Actor->GetWalls()[i]->SetTexture(ERoomMaterialType::WallOutside, TextureOuter, RoomSave.WallSaves[i].OuterTexturePath);
 		}
+		
+		Actor->SetClosedLoop(RoomSave.bClosedLoop);
 
 		GetWorld()->GetSubsystem<UInteriorDesignerSubsystem>()->AddRoomActor(Actor);
 	}

@@ -20,6 +20,8 @@ struct JJRoomSaveData
 	
 	FTransform Transform;
 	FString FloorTexturePath;
+
+	bool bClosedLoop;
 	
 	FORCEINLINE friend  FArchive& operator<<(FArchive &Ar, JJRoomSaveData& SaveGameData ) {
 		Ar << SaveGameData.SplinePoints;
@@ -28,6 +30,7 @@ struct JJRoomSaveData
 		Ar << SaveGameData.Transform;
 		Ar << SaveGameData.FloorTexturePath;
 		Ar << SaveGameData.WallSaves;
+		Ar << SaveGameData.bClosedLoop;
 		
 		return Ar;
 	}	

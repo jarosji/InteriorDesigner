@@ -12,7 +12,8 @@ bool UJJJsonWrapper::InitializeFromJson(const TSharedPtr<FJsonObject> InJsonObje
 {
 	if(!InJsonObject.IsValid())
 		return false;
-	
+
+	JsonObject.Reset();
 	JsonObject = InJsonObject;
 	return true;
 }
@@ -64,7 +65,7 @@ bool UJJJsonWrapper::TryGetStringField(const FString& FieldName, FString& OutVal
 
 bool UJJJsonWrapper::TryGetObjectField(const FString& FieldName, UJJJsonWrapper*& OutVal) const
 {
-	const TSharedPtr<FJsonObject>* OutJsonObject;// = MakeShared<FJsonObject>();
+	const TSharedPtr<FJsonObject>* OutJsonObject;
 	if(JsonObject->TryGetObjectField(FieldName, OutJsonObject))
 	{
 		OutVal->InitializeFromJson(*OutJsonObject);
@@ -94,12 +95,14 @@ bool UJJJsonWrapper::TryGetArrayObjectField(const FString& FieldName, TArray<UJJ
 
 bool UJJJsonWrapper::SerializeToString(FString& OutString) const
 {
-	return false;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<TCHAR>::Create(&OutString);
+	return FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 }
 
-bool UJJJsonWrapper::DeserializeFromString(const FString& OutString, UJJJsonWrapper* OutJsonWrapper)
+bool UJJJsonWrapper::DeserializeFromString(const FString& OutString)
 {
-	return false;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<TCHAR>::Create(OutString);
+	return FJsonSerializer::Deserialize(Reader, JsonObject);
 }
 
 TSharedPtr<FJsonObject> UJJJsonWrapper::GetWrappedJsonObject() const

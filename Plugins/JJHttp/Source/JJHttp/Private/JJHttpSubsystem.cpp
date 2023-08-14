@@ -3,123 +3,10 @@
 
 #include "JJHttpSubsystem.h"
 
-#include "ImageUtils.h"
 #include "JJHttpRequest.h"
 #include "JJJsonWrapper.h"
 #include "Interfaces/IHttpResponse.h"
-/*#include "HttpModule.h"
 
-
-
-void UJJHttpSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-}
-
-void UJJHttpSubsystem::Deinitialize()
-{
-	Super::Deinitialize();
-}
-
-void UJJHttpSubsystem::CallUrl(FString Url)
-{
-	Http = &FHttpModule::Get();
-	FHttpRequestPtr Request = Http->CreateRequest();
-	
-	Request->SetURL(Url);
-	Request->SetVerb("GET");
-
-	Request->OnProcessRequestComplete().BindUObject(this, &UJJHttpSubsystem::CompletedHTTPRequest);
-	Request->OnRequestProgress().BindUObject(this, &UJJHttpSubsystem::ProgressHTTPRequest);
-
-	Request->ProcessRequest();
-}
-
-void UJJHttpSubsystem::UploadFile(FString FilePath, FString Url, const TMap<FString, FString>& Headers)
-{
-	Http = &FHttpModule::Get();
-	TArray<uint8> FileData;
-	const bool FileLoaded = FFileHelper::LoadFileToArray(FileData, *FilePath);
-
-	const FString& FileName = FPaths::GetCleanFilename(FilePath);
-	FHttpRequestPtr Request = Http->CreateRequest();
-	
-	Request->SetURL(Url);
-	Request->SetVerb("POST");
-
-	//Default Headers
-	Request->SetHeader("Content-Type", TEXT("multipart/form-data; boundary=bodyBoundary"));
-
-	//Set Additional Headers
-	TArray<FString> HeaderNames;
-	Headers.GetKeys(HeaderNames);
-	for(FString HeaderName : HeaderNames)
-	{
-		Request->SetHeader(HeaderName, *Headers.Find(HeaderName));
-	}
-
-	FString a = "\r\n--bodyBoundary\r\n";
-	FString b = "Content-Disposition: form-data; name=\"file\";  filename=\"" + FileName + "\"\r\n";
-	FString c = "Content-Type: application/octet-stream\r\n\r\n";
-	FString e = "\r\n--bodyBoundary--\r\n";
-
-	TArray<uint8> data;
-	data.Append((uint8*) TCHAR_TO_UTF8(*a), a.Len());
-	data.Append((uint8*) TCHAR_TO_UTF8(*b), b.Len());
-	data.Append((uint8*) TCHAR_TO_UTF8(*c), c.Len());
-	data.Append(FileData);
-	data.Append((uint8*) TCHAR_TO_UTF8(*e), e.Len());
-
-	Request->SetContent(data);
-
-	Request->OnProcessRequestComplete().BindUObject(this, &UJJHttpSubsystem::CompletedHTTPRequest);
-	Request->OnRequestProgress().BindUObject(this, &UJJHttpSubsystem::ProgressHTTPRequest);
-
-	Request->ProcessRequest();
-}
-
-void UJJHttpSubsystem::DownloadFile(FString FilePath, FString Url, FString FileName)
-{
-	Http = &FHttpModule::Get();
-	FHttpRequestPtr Request = Http->CreateRequest();
-	
-	Request->SetURL(Url);
-	Request->SetVerb("GET");
-
-	Request->OnProcessRequestComplete().BindUObject(this, &UJJHttpSubsystem::CompletedHTTPRequest);
-	Request->OnRequestProgress().BindUObject(this, &UJJHttpSubsystem::ProgressHTTPRequest);
-
-	Request->ProcessRequest();
-}
-
-void UJJHttpSubsystem::CompletedHTTPRequest(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-	if(!bWasSuccessful)
-		return;
-	
-	FString a = "D:/Test.zip";
-	FFileHelper::SaveArrayToFile(Response->GetContent(), *a);
-	
-	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(Response->GetContentAsString());
-	TArray<TSharedPtr<FJsonValue>> OutArray;
-
-	TArray<FFile> Files;
-	if (FJsonSerializer::Deserialize(JsonReader, OutArray))
-	{
-		for(auto Object : OutArray)
-		{
-			FFile File;
-			File.Name = Object->AsObject()->GetStringField("name");
-			Files.Add(File);
-		}
-	}
-	
-	OnRequestDone.Broadcast(Files);
-}
-
-void UJJHttpSubsystem::ProgressHTTPRequest(FHttpRequestPtr Request, int32 BytesSent, int32 BytesReceived)
-{
-}*/
 void UJJHttpSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
@@ -149,7 +36,7 @@ void UJJHttpSubsystem::CallUrl(const FString& Url, EJJHttpVerb Verb, UJJJsonWrap
 	Request->SetVerb(Verb);
 	Request->SetContentType(EJJHttpContentType::application_json);
 	if(IsValid(JsonWrapperContent))
-		Request->SetJsonContent(JsonWrapperContent->GetWrappedJsonObject());
+		Request->SetJsonContent(JsonWrapperContent);
 
 	Request->OnRequestDoneStatic.AddLambda([this, OnUrlCallFailed, OnUrlCallSuccessful] (FHttpResponsePtr Response)
 	{
@@ -174,7 +61,7 @@ void UJJHttpSubsystem::CallUrl(const FString& Url, EJJHttpVerb Verb, UJJJsonWrap
 void UJJHttpSubsystem::Login(const FString& AuthUrl, const FString& Username, const FString& Password,
                              FOnLoginSuccessful OnLoginSuccessful, FOnLoginFailed OnLoginFailed)
 {
-	TSharedPtr<FJsonObject> JsonObj = MakeShared<FJsonObject>();
+	UJJJsonWrapper* JsonObj = NewObject<UJJJsonWrapper>();
 	JsonObj->SetStringField("userName", Username);
 	JsonObj->SetStringField("password", Password);
 	
@@ -186,20 +73,34 @@ void UJJHttpSubsystem::Login(const FString& AuthUrl, const FString& Username, co
 
 	Request->OnRequestDoneStatic.AddLambda([this, OnLoginSuccessful, OnLoginFailed] (FHttpResponsePtr Response)
 	{
-		const FString& Token = Response->GetContentAsString();
-		if(Token.Len() > 0)
+		bool Error = false;
+		const FString& Content = Response->GetContentAsString();
+		if(Content.Len() > 0)
 		{
-			SetBearerToken(Token);
+			UJJJsonWrapper* Json = NewObject<UJJJsonWrapper>();
+			if(Json->DeserializeFromString(Content))
+			{
+				UJJJsonWrapper* OutVal = NewObject<UJJJsonWrapper>();
+				if(Json->TryGetObjectField("errors", OutVal))
+				{
+					OnLoginFailed.ExecuteIfBound(Response->GetResponseCode());
+					Error = true;
+				}
+			}
 
-			FUserInfo UserInfo;
-			OnLoginSuccessful.ExecuteIfBound(UserInfo, Token);
-			OnLoginMulti.Broadcast(true);
+			if(Error == false)
+			{
+				SetBearerToken(Content);
+
+				FUserInfo UserInfo;
+				OnLoginSuccessful.ExecuteIfBound(UserInfo, Content);
+				OnLoginMulti.Broadcast(true);
+			}
 		}
 		else
 		{
 			OnLoginFailed.ExecuteIfBound(Response->GetResponseCode());
 		}
-		
 	});
 	
 	Request->ProcessRequest();

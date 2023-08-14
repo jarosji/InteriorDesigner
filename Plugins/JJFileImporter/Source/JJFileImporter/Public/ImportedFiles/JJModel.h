@@ -30,7 +30,7 @@ struct JJFILEIMPORTER_API FJJGeometry
 	uint32 NumIndices;
 	uint32 NumVertices;
 
-	FORCEINLINE friend  FArchive& operator<<(FArchive &Ar, FJJGeometry& SaveGameData ) {
+	FORCEINLINE friend FArchive& operator<<(FArchive &Ar, FJJGeometry& SaveGameData ) {
 
 		Ar << SaveGameData.Positions;
 		Ar << SaveGameData.Indices;

@@ -7,6 +7,8 @@
 #include "HttpModule.h"
 #include "JJHttpRequest.generated.h"
 
+class UJJJsonWrapper;
+
 /*class IHttpRequest;
 class IHttpResponse;
 
@@ -63,8 +65,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "JJHttp")
 	void SetURL(const FString& Url);
 
-	//UFUNCTION(BlueprintCallable, Category = "JJHttp")
-	void SetJsonContent(const TSharedPtr<FJsonObject> JsonContent);
+	UFUNCTION(BlueprintCallable, Category = "JJHttp")
+	void SetJsonContent(const UJJJsonWrapper* JsonContent);
 
 	UFUNCTION(BlueprintCallable, Category = "JJHttp")
 	void SetBinaryContent(const TArray<uint8>& BinaryData);

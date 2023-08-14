@@ -78,7 +78,6 @@ void JJTextureImporter::ImportTexture(const FString& BaseFilename, UTexture2D*& 
 	}
 
 	const int32 NumMips = 1;
-	
 	const int32 TextureSizeX = OutImage.SizeX;
 	const int32 TextureSizeY = OutImage.SizeY;
 	EPixelFormat PixelFormat = RawImageFormatToPixelFormat(OutImage.Format);

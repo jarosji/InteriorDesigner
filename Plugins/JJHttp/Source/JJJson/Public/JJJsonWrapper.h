@@ -55,11 +55,10 @@ public:
 	bool SerializeToString(FString& OutString)  const;
 
 	UFUNCTION(BlueprintCallable, Category="JJJson")
-	bool DeserializeFromString(const FString& OutString, UJJJsonWrapper* OutJsonWrapper);
+	bool DeserializeFromString(const FString& OutString);
 
 	TSharedPtr<FJsonObject> GetWrappedJsonObject() const;
 
-	
 private:
 	TSharedPtr<FJsonObject> JsonObject;
 };

@@ -15,7 +15,7 @@
 AJJRoomV2::AJJRoomV2()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	Spline = CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
 	Spline->SetupAttachment(DynamicMeshComponent);
@@ -56,6 +56,7 @@ JJRoomSaveData AJJRoomV2::CreateSaveData()
 
 	Save.Transform = GetTransform();
 	Save.FloorTexturePath = FloorTexturePath;
+	Save.bClosedLoop = bIsClosedLoop;
 
 	for (int i = 0;i<Spline->GetNumberOfSplinePoints();i++)
 	{
@@ -85,12 +86,8 @@ void AJJRoomV2::BuildMeshDesc(JJRoomSaveData& RoomSaveData)
 		Point.Type = ESplinePointType::Linear;
 		Point.InputKey = i;
 		Spline->AddPoint(Point);
-
-		/*
-		auto act = GetWorld()->SpawnActor<AJJWall>();
-		WallPool.Add(act);
-		act->Init(DefaultMaterial);*/
 	}
+	
 	TFunctionRef<void(FDynamicMesh3&)> Func = [&RoomSaveData] (FDynamicMesh3& Mesh)
 	{
 		for(FVector Vec : RoomSaveData.Vertices)
@@ -128,8 +125,7 @@ void AJJRoomV2::Rebuild()
 	TArray<UMaterialInterface*> NewMaterialSet;
 	NewMaterialSet.Add(FloorMaterial);
 	DynamicMeshComponent->ConfigureMaterialSet(NewMaterialSet);
-
-
+	
 	{
 		const FVector& Location = Spline->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::Local);
 		const FRotator& Rotation = Spline->GetRotationAtSplinePoint(0, ESplineCoordinateSpace::Local);
@@ -217,7 +213,6 @@ void AJJRoomV2::AddWall(const FVector StartInside, const FVector StartOutside, i
 	{
 		Wall->AddWallSegment(StartInside, CachedFirstVecInside, Spline->GetRotationAtSplinePoint(Index, ESplineCoordinateSpace::Local).Yaw, false);
 		TopIn = FVector2D(CachedFirstVecInside.X, CachedFirstVecInside.Y);
-		//FloorPoints.Add(FVector2D(CachedFirstVecInside.X, CachedFirstVecInside.Y));
 	}
 	else if(CalculateWallEndCoord(StartInside,  -Thickness/2, Index, Intersection))
 	{
@@ -230,7 +225,6 @@ void AJJRoomV2::AddWall(const FVector StartInside, const FVector StartOutside, i
 	if(bIsClosedLoop && Index == Spline->GetNumberOfSplinePoints()-2)
 	{
 		Wall->AddWallSegment(StartOutside, CachedFirstVecOutside, Spline->GetRotationAtSplinePoint(Index, ESplineCoordinateSpace::Local).Yaw, true);
-		//FloorPoints.Add(FVector2D(CachedFirstVecInside.X, CachedFirstVecInside.Y));
 		TopOut = FVector2D(CachedFirstVecOutside.X, CachedFirstVecOutside.Y);
 	}
 	else if(CalculateWallEndCoord(StartOutside, Thickness/2, Index, Intersection))
