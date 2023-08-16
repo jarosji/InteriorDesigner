@@ -1,0 +1,3 @@
+[submodule "Plugins/JJFileImporter/Source/ThirdParty/AssimpLibrary/assimp"]
+	path = Plugins/JJFileImporter/Source/ThirdParty/AssimpLibrary/assimp
+	url = https://github.com/assimp/assimp
